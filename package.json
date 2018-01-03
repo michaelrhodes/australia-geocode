@@ -1,0 +1,17 @@
+{
+  "name": "australia-geocode",
+  "author": "Allen Hori",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "update": "node update.js"
+  },
+  "devDependencies": {
+    "csv-parser": "~1.12.0",
+    "flush-write-stream": "~1.0.2",
+    "pump": "~2.0.0",
+    "simple-get": "~2.7.0",
+    "through2": "~2.0.3"
+  }
+}
