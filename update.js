@@ -9,17 +9,18 @@ var stringify = JSON.stringify
 
 var source = 'https://raw.githubusercontent.com/allenhori/AustraliaGeocode/master/Australian.Suburbs.and.Geocodes.csv'
 
-var file = path.resolve(__dirname, 'index.js')
+var index = path.resolve(__dirname, 'index.js')
+var data = path.resolve(__dirname, 'data.ndjson')
 
 get(source, function (err, res) {
   if (err) throw err
 
-  pump(res, parse(), rewrite(), format(), write(file), function (err) {
+  pump(res, parse(), edit(), write(), function (err) {
     if (err) throw err
   })
 })
 
-function rewrite (ps) {
+function edit (ps) {
   return through.obj(function (s, enc, next) {
     var state = s.States.toUpperCase().replace(/[^A-Z]/g, '')
     var postcode = Number(s.Postcode)
@@ -42,9 +43,15 @@ function rewrite (ps) {
   })
 }
 
-function format () {
-  return through(function (line, enc, next) {
-    next(null, line
+function write () {
+  var i = 0
+  var is = fs.createWriteStream(index)
+  var ds = fs.createWriteStream(data)
+  is.write('module.exports = [\n')
+
+  return flush(function (line, enc, next) {
+    ds.write(line + '\n')
+    is.write((i++ ? ',\n' : '') + '  ' + line
       .toString()
       .replace(/'/g, "\\'")
       .replace(/"/g, "'")
@@ -52,21 +59,12 @@ function format () {
       .replace(/}$/, ' }')
       .replace(/'([^']+)':/g, '$1: ')
       .replace(/,([a-z])/g, ', $1'))
-  })
-}
-
-function write (file) {
-  var i = 0
-  var ws = fs.createWriteStream(file)
-  ws.write('module.exports = [\n')
-
-  return flush(function (line, enc, next) {
-    ws.write((i++ ? ',\n' : '') + '  ' + line)
     next()
   },
   function (done) {
-    ws.write('\n]')
-    ws.end()
+    is.write('\n]')
+    is.end()
+    ds.end()
     done()
   })
 }
